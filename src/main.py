@@ -2,7 +2,7 @@ import asyncio
 import os
 import signal
 from aiohttp import web
-from connectivity.appConnection import AppConnection
+from connectivity.domoticzAppAPI import DomoticzAppAPI
 from connectivity.cameraConnection import CameraConnection
 from connectivity.mqttConnection import MqttConnection
 from logic.mqttEventHandler import MqttEventHandler
@@ -17,19 +17,19 @@ async def startServer():
     mqttEventHandler = MqttEventHandler()
 
     cameraConnection = CameraConnection()
-    appConnection = AppConnection(appEventHandler)
+    domoticzAppAPI = DomoticzAppAPI(appEventHandler)
     mqttConnection = MqttConnection(mqttEventHandler)
 
     appEventHandler.setCameraConnection(cameraConnection)
-    appEventHandler.setAppConnection(appConnection)
+    appEventHandler.setDomoticzAppAPI(domoticzAppAPI)
     appEventHandler.setMqttConnection(mqttConnection)
 
     mqttEventHandler.setCameraConnection(cameraConnection)
-    mqttEventHandler.setAppConnection(appConnection)
+    mqttEventHandler.setDomoticzAppAPI(domoticzAppAPI)
 
     mqttConnection.start()
 
-    webSocketRunner = web.AppRunner(appConnection.app)
+    webSocketRunner = web.AppRunner(domoticzAppAPI.app)
     host = os.getenv('SERVER_HOST')
     port = int(os.getenv('SERVER_PORT'))
 
@@ -75,7 +75,5 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("Server stopped by user")
     except Exception as e:
         logger.error(f"Server error: {e}")

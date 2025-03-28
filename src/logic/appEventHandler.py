@@ -7,7 +7,8 @@ class AppEventHandler:
         self.gateToggleIdx = int(os.getenv('GATE_TOGGLE_IDX'))
         self.cameraConnection = None
         self.mqttConnection = None
-        self.appConnection = None
+        self.domoticzAppAPI = None
+        self.gateState = "0" #0 = Closed, 1=Open,2=Closing,3=Opening
 
     def setCameraConnection(self, cameraConnection):
         self.cameraConnection = cameraConnection
@@ -15,29 +16,33 @@ class AppEventHandler:
     def setMqttConnection(self, mqttConnection):
         self.mqttConnection = mqttConnection
 
-    def setAppConnection(self, appConnection):
-        self.appConnection = appConnection
+    def setDomoticzAppAPI(self, domoticzAppAPI):
+        self.domoticzAppAPI = domoticzAppAPI
+
+    def updateGateState(self, state: str):
+        self.gateState = state
+        self.logger.info(f"Gate state updated to: {state}")
 
     async def handleAppMessage(self, payload):
-        try:
-            messageType = payload.get('type')
-            if messageType == 'opengate':
-                await self._handleGateOpen(payload)
-            elif messageType == 'getCameraImage':
-                await self._handleCameraImageRequest(payload)
-        except Exception as e:
-            self.logger.error(f"Error handling message: {e}")
+        messageType = payload.get('type')
+        if messageType == "opengate":
+            await self._handleGateOpenRequest(payload)
+        elif messageType == "getCameraImage":
+            await self._handleCameraImageRequest(payload)
 
-    async def _handleGateOpen(self, payload):
+    async def _handleGateOpenRequest(self, payload):
         if not self.mqttConnection:
             self.logger.error("MQTT connection not configured")
             return
         if not self.gateToggleIdx:
             self.logger.error("Gate toggle device index not configured")
             return
-        mqttPayload = {"command": "switchlight", "idx": self.gateToggleIdx, "svalue": "On"}
-        self.mqttConnection.publish('domoticz/in/GateToggleCommand', mqttPayload)
-        self.logger.info(f"Gate open command sent for device {self.gateToggleIdx}")
+        if self.gateState in ["1", "3"]:
+            self.logger.info(f"Ignoring request: Gate currently open (=1) or opening (=3) (state = {self.gateState})")
+            return
+        mqttPayload = {"command": "switchlight", "idx": self.gateToggleIdx, "switchcmd": "On"}
+        self.mqttConnection.publish('domoticz/in', mqttPayload)
+        self.logger.info(f"Gate open command sent: {mqttPayload}")
 
     async def _handleCameraImageRequest(self, payload):
         if not self.cameraConnection:
@@ -50,7 +55,7 @@ class AppEventHandler:
         imageData = await self.cameraConnection.getCameraImage(cameraId)
         if imageData:
             payload = {"type": "cameraImage", "cameraId": cameraId, "imageData": imageData}
-            await self.appConnection.broadcastMessage(payload)
+            await self.domoticzAppAPI.broadcastMessage(payload)
             self.logger.info(f"Retrieved and published image from camera {cameraId}")
         else:
             self.logger.warning(f"Failed to retrieve image from camera {cameraId}")
