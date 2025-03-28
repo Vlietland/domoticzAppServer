@@ -16,64 +16,74 @@ class MqttEventHandler:
             'GateBell': self._handleGateBell,
             'FireAlarm': self._handleFireAlarm,
             'IntrusionAlarm': self._handleIntrusionAlarm,
-            'LeakDetection': self._handleLeakDetection
-        }
-        self.deviceIndices = {
-            'gateToggleCommand': os.getenv('GATE_TOGGLE_IDX')
+            'LeakDetection': self._handleLeakDetection,
+            'GateState': self._handleGateState
         }
         self.cameraConnection = None
         self.mqttConnection = None
-        self.appConnection = None
+        self.domoticzAppAPI = None
+        self.appEventHandler = None  # Needed to forward gate state
 
     def setCameraConnection(self, cameraConnection):
         self.cameraConnection = cameraConnection
 
-    def setAppConnection(self, appConnection):
-        self.appConnection = appConnection
+    def setDomoticzAppAPI(self, domoticzAppAPI):
+        self.domoticzAppAPI = domoticzAppAPI
+
+    def setAppEventHandler(self, appEventHandler):
+        self.appEventHandler = appEventHandler
 
     async def handleMqttMessage(self, topic, payload):
         try:
             deviceName = topic.split("/")[-1]
             handler = self.mqttEventMap.get(deviceName)
-            if handler == None:
+            if handler is None:
                 self.logger.debug(f"No handler available for device: {deviceName}")
                 return
             deviceValue = payload.get('nvalue')
-            if deviceValue != 1:
+            if deviceName != "GateState" and deviceValue != 1:
                 self.logger.debug(f"No need to process value: {deviceValue}")
                 return
-            await handler()
+            await handler(payload)
         except Exception as e:
             self.logger.error(f"Error processing MQTT message: {e}")
 
-    async def _handleLeakDetection(self):
+    async def _handleLeakDetection(self, _):
         message = f'<html><body>{LEAK_DETECTION_MESSAGE}</body></html>'
         await self._sendAppMessage(message)
 
-    async def _handleFireAlarm(self):
+    async def _handleFireAlarm(self, _):
         message = f'<html><body>{FIRE_ALARM_MESSAGE}</body></html>'
         await self._sendAppMessage(message)
 
-    async def _handleIntrusionAlarm(self):
+    async def _handleIntrusionAlarm(self, _):
         message = f'<html><body>{INTRUSION_ALARM_MESSAGE}</body></html>'
         await self._sendAppMessage(message)
 
-    async def _handleGateBell(self):
+    async def _handleGateBell(self, _):
         message = f'<html><body>{GATE_BELL_MESSAGE}</body></html>'
-        image = self.cameraConnection.getCameraImage('garage') if self.cameraConnection else None
+        image = await self.cameraConnection.getCameraImage('garage') if self.cameraConnection else None
         await self._sendAppMessage(message, image)
 
-    async def _handleDoorBell(self):
+    async def _handleDoorBell(self, _):
         message = f'<html><body>{DOOR_BELL_MESSAGE}</body></html>'
-        image = self.cameraConnection.getCameraImage('doorentry') if self.cameraConnection else None
+        image = await self.cameraConnection.getCameraImage('doorentry') if self.cameraConnection else None
         await self._sendAppMessage(message, image)
+
+    async def _handleGateState(self, payload):
+        state = payload.get("svalue")
+        if not state:
+            self.logger.warning("Gate state update received without svalue")
+            return
+        self.logger.info(f"Received gate state update: {state}")
+        if self.appEventHandler:
+            self.appEventHandler.updateGateState(state)
 
     async def _sendAppMessage(self, message, imageData=None):
-        if not self.appConnection:
+        if not self.domoticzAppAPI:
             self.logger.error("App connection not configured")
             return
         payload = {'type': 'notification', 'message': message}
         if imageData:
             payload['imageData'] = imageData
-        await self.appConnection.broadcastMessage(payload)
-
+        await self.domoticzAppAPI.broadcastMessage(payload)

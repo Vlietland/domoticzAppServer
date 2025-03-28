@@ -41,48 +41,26 @@ class MqttConnection:
             self.logger.error(f"Connection failed with result code {rc}")
 
     def onMessage(self, client, userdata, message):
-        try:
-            payload = message.payload.decode('utf-8')
-            self.logger.info(f"Received MQTT message on topic {message.topic}: {payload}")
-            try:
-                parsedPayload = json.loads(payload)
-            except json.JSONDecodeError:
-                self.logger.warning(f"Could not parse JSON from payload: {payload}")
-                return
-            
-            if self.eventHandler:
-                self.messageQueue.put((message.topic, parsedPayload))
-        except Exception as e:
-            self.logger.error(f"Error processing MQTT message: {e}")
+        payload = message.payload.decode('utf-8')
+        self.logger.info(f"Received MQTT message on topic {message.topic}: {payload}")
+        parsedPayload = json.loads(payload)
+        if self.eventHandler:
+            self.messageQueue.put((message.topic, parsedPayload))
     
     async def processMessageQueue(self):
         self.logger.info("Starting MQTT message queue processor")
         while not self.stopEvent.is_set():
-            try:
-                while not self.messageQueue.empty():
-                    topic, payload = self.messageQueue.get_nowait()
-                    try:
-                        await self.eventHandler.handleMqttMessage(topic, payload)
-                    except Exception as e:
-                        self.logger.error(f"Error handling MQTT message: {e}")
-                    finally:
-                        self.messageQueue.task_done()
-                await asyncio.sleep(0.1)
-            except Exception as e:
-                self.logger.error(f"Error in message queue processor: {e}")
-                await asyncio.sleep(1)  # Wait a bit longer on error
-        
+            while not self.messageQueue.empty():
+                topic, payload = self.messageQueue.get_nowait()
+                await self.eventHandler.handleMqttMessage(topic, payload)
+            await asyncio.sleep(0.1)
         self.logger.info("MQTT message queue processor stopped")
 
     def start(self):
-        try:
-            self.connect()
-            self.client.loop_start()
-            # Start the message queue processor in the current event loop
-            self.processingTask = asyncio.create_task(self.processMessageQueue())
-            self.logger.info("MQTT connection started with message queue processor")
-        except Exception as e:
-            self.logger.error(f"Error starting MQTT: {e}")
+        self.connect()
+        self.client.loop_start()
+        self.processingTask = asyncio.create_task(self.processMessageQueue())
+        self.logger.info("MQTT connection started with message queue processor")
 
     async def disconnectMqttAsync(self):
         if self.client.is_connected():
@@ -92,13 +70,9 @@ class MqttConnection:
     def stop(self):
         self.logger.info("Stopping MQTT client...")
         self.stopEvent.set()
-        
-        # Cancel the message processing task if it exists
         if self.processingTask and not self.processingTask.done():
             self.processingTask.cancel()
-
         asyncio.create_task(self.disconnectMqttAsync())
-
         if self.mqttThread:
             self.mqttThread.join()
         self.logger.info("MQTT client stopped")
