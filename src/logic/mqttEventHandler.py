@@ -87,3 +87,4 @@ class MqttEventHandler:
         if imageData:
             payload['imageData'] = imageData
         await self.domoticzAppAPI.broadcastMessage(payload)
+        self.logger.info(f"Message broadcasted")
