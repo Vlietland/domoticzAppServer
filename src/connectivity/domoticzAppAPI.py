@@ -27,20 +27,20 @@ class DomoticzAppAPI:
             if self.messageHandler:
                 await self.messageHandler.handleAppMessage(payload)
 
-async def broadcastMessage(self, payload):
-    for connection in list(self.activeConnections):
-        if connection.closed:
-            self.logger.warning("Removing closed connection from activeConnections.")
-            self.activeConnections.remove(connection)
-            continue
-        try:
-            await connection.send_str(json.dumps(payload))
-        except ConnectionResetError as e:
-            self.logger.error(f"ConnectionResetError while sending message: {e}")
-            self.activeConnections.remove(connection)  # Remove the closed connection
-        except Exception as e:
-            self.logger.error(f"Unexpected error while sending message: {e}")
-            self.activeConnections.remove(connection)
+    async def broadcastMessage(self, payload):
+        for connection in list(self.activeConnections):
+            if connection.closed:
+                self.logger.warning("Removing closed connection from activeConnections.")
+                self.activeConnections.remove(connection)
+                continue
+            try:
+                await connection.send_str(json.dumps(payload))
+            except ConnectionResetError as e:
+                self.logger.error(f"ConnectionResetError while sending message: {e}")
+                self.activeConnections.remove(connection)  # Remove the closed connection
+            except Exception as e:
+                self.logger.error(f"Unexpected error while sending message: {e}")
+                self.activeConnections.remove(connection)
 
     async def healthCheck(self, request):
         return web.json_response({"status": "ok", "activeConnections": len(self.activeConnections)})
