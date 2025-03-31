@@ -23,6 +23,8 @@ class CameraConnection:
 
     async def getCameraImage(self, cameraId):
         url = f"{self.cameraIP.get(cameraId)}{self.sub_url}"
+        self.logger.debug(f"Attempting to access camera '{cameraId}' at URL: {url}")
+        self.logger.debug(f"Using username: {self.username}")        
         if not self.cameraIP.get(cameraId):
             self.logger.error(f"Camera with ID {cameraId} not found")
             return None
