@@ -43,6 +43,10 @@ async def startServer():
 async def shutdown(runner, mqttConnection, client_task):
     logger.info("Shutting down server and client...")
     try:
+        for ws in list(domoticzAppAPI.activeConnections):
+            await ws.close()
+        domoticzAppAPI.activeConnections.clear()
+
         if client_task:
             await client_task.get_loop().run_until_complete(client_task.result().stop())
             try:
