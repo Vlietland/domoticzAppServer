@@ -28,6 +28,11 @@ class CameraConnection:
         if not self.cameraIP.get(cameraId):
             self.logger.error(f"Camera with ID {cameraId} not found")
             return None
-        response = await asyncio.to_thread(requests.get, url, auth=(self.username, self.password))
-        response.raise_for_status()
-        return base64.b64encode(response.content).decode('utf-8')
+        try:
+            response = await asyncio.to_thread(requests.get, url, auth=(self.username, self.password))
+            response.raise_for_status()
+            return base64.b64encode(response.content).decode('utf-8')
+        except requests.exceptions.HTTPError as e:
+            if response.status_code == 401:
+                self.logger.error(f"Unauthorized (401) - Camera '{cameraId}' URL: {url}")
+            raise
