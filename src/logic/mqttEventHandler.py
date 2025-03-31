@@ -22,7 +22,7 @@ class MqttEventHandler:
         self.cameraConnection = None
         self.mqttConnection = None
         self.domoticzAppAPI = None
-        self.appEventHandler = None  # Needed to forward gate state
+        self.appEventHandler = None
 
     def setCameraConnection(self, cameraConnection):
         self.cameraConnection = cameraConnection
@@ -49,24 +49,24 @@ class MqttEventHandler:
             self.logger.error(f"Error processing MQTT message: {e}")
 
     async def _handleLeakDetection(self, _):
-        message = f'<html><body>{LEAK_DETECTION_MESSAGE}</body></html>'
+        message = f'{LEAK_DETECTION_MESSAGE}'
         await self._sendAppMessage(message)
 
     async def _handleFireAlarm(self, _):
-        message = f'<html><body>{FIRE_ALARM_MESSAGE}</body></html>'
+        message = f'<html><body>{FIRE_ALARM_MESSAGE}'
         await self._sendAppMessage(message)
 
     async def _handleIntrusionAlarm(self, _):
-        message = f'<html><body>{INTRUSION_ALARM_MESSAGE}</body></html>'
+        message = f'{INTRUSION_ALARM_MESSAGE}'
         await self._sendAppMessage(message)
 
     async def _handleGateBell(self, _):
-        message = f'<html><body>{GATE_BELL_MESSAGE}</body></html>'
+        message = f'{GATE_BELL_MESSAGE}'
         image = await self.cameraConnection.getCameraImage('garage') if self.cameraConnection else None
         await self._sendAppMessage(message, image)
 
     async def _handleDoorBell(self, _):
-        message = f'<html><body>{DOOR_BELL_MESSAGE}</body></html>'
+        message = f'{DOOR_BELL_MESSAGE}'
         image = await self.cameraConnection.getCameraImage('doorentry') if self.cameraConnection else None
         await self._sendAppMessage(message, image)
 
@@ -87,4 +87,4 @@ class MqttEventHandler:
         if imageData:
             payload['imageData'] = imageData
         await self.domoticzAppAPI.broadcastMessage(payload)
-        self.logger.info(f"Message broadcasted")
+        self.logger.info(f"Message broadcasted, with messageText: {message}")
