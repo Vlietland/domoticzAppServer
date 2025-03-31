@@ -7,7 +7,6 @@ from utils.logger import getLogger
 class DomoticzAppAPI:
     def __init__(self, eventHandler):
         self.logger = getLogger(__name__)
-        self.jwtSecret = os.getenv('JWT_SECRET')
         self.eventHandler = eventHandler
         self.messageHandler = eventHandler
         self.activeConnections = set()
