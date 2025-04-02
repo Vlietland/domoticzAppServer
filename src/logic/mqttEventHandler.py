@@ -37,12 +37,12 @@ class MqttEventHandler:
         deviceName = topic.split("/")[-1]
         handler = self.mqttEventMap.get(deviceName)
         nvalue = payload.get("nvalue", None)        
-        if nvalue is None or nvalue != 1:
-            self.logger.debug(f"Ignoring payload with nvalue='{nvalue}' for device: {deviceName}")
-            return   
         if handler is None:
             self.logger.debug(f"No handler available for device: {deviceName}")
             return
+        if nvalue is None or nvalue != 1:
+            self.logger.debug(f"Ignoring payload with nvalue='{nvalue}' for device: {deviceName}")
+            return   
         message, image = await handler(payload)
         await self._sendAppMessage(message, image)
 
