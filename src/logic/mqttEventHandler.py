@@ -56,7 +56,7 @@ class MqttEventHandler:
         return GATE_BELL_MESSAGE, image
 
     async def _handleDoorBell(self, _):
-        image = await self.cameraConnection.getCameraImage('FontdoorEntry') if self.cameraConnection else None
+        image = await self.cameraConnection.getCameraImage('FrontdoorEntry') if self.cameraConnection else None
         return DOOR_BELL_MESSAGE, image
 
     async def _handleGateState(self, payload):
