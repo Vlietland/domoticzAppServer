@@ -34,20 +34,13 @@ class MqttEventHandler:
         self.appEventHandler = appEventHandler
 
     async def handleMqttMessage(self, topic, payload):
-        try:
-            deviceName = topic.split("/")[-1]
-            handler = self.mqttEventMap.get(deviceName)
-            if handler is None:
-                self.logger.debug(f"No handler available for device: {deviceName}")
-                return
-            deviceValue = payload.get('nvalue')
-            if deviceName != "GateState" and deviceValue != 1:
-                self.logger.debug(f"No need to process value: {deviceValue}")
-                return
-            message, image = await handler(payload)
-            await self._sendAppMessage(message, image)
-        except Exception as e:
-            self.logger.error(f"Error processing MQTT message: {e}")
+        deviceName = topic.split("/")[-1]
+        handler = self.mqttEventMap.get(deviceName)
+        if handler is None:
+            self.logger.debug(f"No handler available for device: {deviceName}")
+            return
+        message, image = await handler(payload)
+        await self._sendAppMessage(message, image)
 
     async def _handleLeakDetection(self, _):
         return LEAK_DETECTION_MESSAGE, None
@@ -68,21 +61,13 @@ class MqttEventHandler:
 
     async def _handleGateState(self, payload):
         state = payload.get("svalue")
-        if not state:
-            self.logger.warning("Gate state update received without svalue")
-            return
         self.logger.info(f"Received gate state update: {state}")
         if self.appEventHandler:
             self.appEventHandler.updateGateState(state)
 
     async def _sendAppMessage(self, message, imageData=None):
-        if not self.domoticzAppAPI:
-            self.logger.error("App connection not configured")
-            return
-
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         message_with_timestamp = f"[{timestamp}] {message}"
-
         payload = {'type': 'notification', 'message': message_with_timestamp}
         if imageData:
             payload['imageData'] = imageData

@@ -37,7 +37,7 @@ class DomoticzAppAPI:
                 await connection.send_str(json.dumps(payload))
             except ConnectionResetError as e:
                 self.logger.error(f"ConnectionResetError while sending message: {e}")
-                self.activeConnections.remove(connection)  # Remove the closed connection
+                self.activeConnections.remove(connection)
             except Exception as e:
                 self.logger.error(f"Unexpected error while sending message: {e}")
                 self.activeConnections.remove(connection)
