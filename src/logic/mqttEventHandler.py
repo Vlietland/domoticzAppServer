@@ -12,7 +12,6 @@ class MqttEventHandler:
     def __init__(self):
         self.logger = getLogger(__name__)
         self.mqttEventMap = {
-            'Test2': self._handleGateBell,
             'DoorBell': self._handleDoorBell,
             'GateBell': self._handleGateBell,
             'FireAlarm': self._handleFireAlarm,
@@ -60,11 +59,11 @@ class MqttEventHandler:
         return INTRUSION_ALARM_MESSAGE, None
 
     async def _handleGateBell(self, _):
-        image = await self.cameraConnection.getCameraImage('garage') if self.cameraConnection else None
+        image = await self.cameraConnection.getCameraImage('Garage') if self.cameraConnection else None
         return GATE_BELL_MESSAGE, image
 
     async def _handleDoorBell(self, _):
-        image = await self.cameraConnection.getCameraImage('doorentry') if self.cameraConnection else None
+        image = await self.cameraConnection.getCameraImage('FontdoorEntry') if self.cameraConnection else None
         return DOOR_BELL_MESSAGE, image
 
     async def _handleGateState(self, payload):

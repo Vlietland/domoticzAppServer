@@ -11,14 +11,14 @@ class CameraConnection:
         self.password = os.getenv('CAM_PW')
         self.sub_url = os.getenv('SUB_URL')
         self.cameraIP = {
-            'garage': os.getenv('CAM_GARAGE_IP'),
-            'pantry': os.getenv('CAM_PANTRY_IP'),
-            'frontdoorentry': os.getenv('CAM_FRONTDOORENTRY_IP'),
-            'frontdoor': os.getenv('CAM_FRONTDOOR_IP'),
-            'gardensouth': os.getenv('CAM_GARDENSOUTH_IP'),
-            'terraceliving': os.getenv('CAM_TERRACELIVING_IP'),
-            'gardenwest': os.getenv('CAM_GARDENWEST_IP'),
-            'backdoor': os.getenv('CAM_BACKDOOR_IP')
+            'Garage': os.getenv('CAM_GARAGE_IP'),
+            'Pantry': os.getenv('CAM_PANTRY_IP'),
+            'FrontdoorEntry': os.getenv('CAM_FRONTDOORENTRY_IP'),
+            'Frontdoor': os.getenv('CAM_FRONTDOOR_IP'),
+            'GardenSouth': os.getenv('CAM_GARDENSOUTH_IP'),
+            'TerraceLiving': os.getenv('CAM_TERRACELIVING_IP'),
+            'GardenWest': os.getenv('CAM_GARDENWEST_IP'),
+            'Backdoor': os.getenv('CAM_BACKDOOR_IP')
         }
 
     async def getCameraImage(self, cameraId):
