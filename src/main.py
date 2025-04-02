@@ -91,3 +91,4 @@ if __name__ == "__main__":
         asyncio.run(server.main())
     except Exception as e:
         logger.error(f"Server error: {e}")
+        raise

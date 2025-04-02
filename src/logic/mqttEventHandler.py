@@ -2,27 +2,20 @@ import os
 from utils.logger import getLogger
 from datetime import datetime
 
-LEAK_DETECTION_MESSAGE = "The WATER detector in the Business Entry has detected water leakage !!!"
-FIRE_ALARM_MESSAGE = "The FIRE alarm has detected FIRE and/or SMOKE !!!"
-INTRUSION_ALARM_MESSAGE = "The INTRUSION alarm has detected a tripped sensor, which set off the alarm !!!"
-GATE_BELL_MESSAGE = "GATE Bell has been pressed. Who is at the gate?"
-DOOR_BELL_MESSAGE = "DOOR Bell has been pressed. Who is at the door?"
-
 class MqttEventHandler:
     def __init__(self):
         self.logger = getLogger(__name__)
-        self.mqttEventMap = {
-            'DoorBell': self._handleDoorBell,
-            'GateBell': self._handleGateBell,
-            'FireAlarm': self._handleFireAlarm,
-            'IntrusionAlarm': self._handleIntrusionAlarm,
-            'LeakDetection': self._handleLeakDetection,
-            'GateState': self._handleGateState
-        }
         self.cameraConnection = None
         self.mqttConnection = None
         self.domoticzAppAPI = None
         self.appEventHandler = None
+
+        self.DEVICE_1 = os.getenv('DEVICE_1')
+        self.DEVICE_2 = os.getenv('DEVICE_2')
+        self.DEVICE_3 = os.getenv('DEVICE_3')
+        self.DEVICE_4 = os.getenv('DEVICE_4')
+        self.DEVICE_5 = os.getenv('DEVICE_5')                        
+        self.DEVICE_6 = os.getenv('DEVICE_6')
 
     def setCameraConnection(self, cameraConnection):
         self.cameraConnection = cameraConnection
@@ -35,45 +28,29 @@ class MqttEventHandler:
 
     async def handleMqttMessage(self, topic, payload):
         deviceName = topic.split("/")[-1]
-        handler = self.mqttEventMap.get(deviceName)
-        nvalue = payload.get("nvalue", None)        
-        if handler is None:
-            self.logger.debug(f"No handler available for device: {deviceName}")
+        if deviceName not in [self.DEVICE_1, self.DEVICE_2, self.DEVICE_3, self.DEVICE_4, self.DEVICE_5, self.DEVICE_6]:
+            self.logger.debug(f"Not a device that needs to be handled: {deviceName}")
             return
+        nvalue = payload.get("nvalue")        
         if nvalue is None or nvalue != 1:
             self.logger.debug(f"Ignoring payload with nvalue='{nvalue}' for device: {deviceName}")
-            return   
-        message, image = await handler(payload)
-        await self._sendAppMessage(message, image)
-
-    async def _handleLeakDetection(self, _):
-        return LEAK_DETECTION_MESSAGE, None
-
-    async def _handleFireAlarm(self, _):
-        return FIRE_ALARM_MESSAGE, None
-
-    async def _handleIntrusionAlarm(self, _):
-        return INTRUSION_ALARM_MESSAGE, None
-
-    async def _handleGateBell(self, _):
-        image = await self.cameraConnection.getCameraImage('Garage') if self.cameraConnection else None
-        return GATE_BELL_MESSAGE, image
-
-    async def _handleDoorBell(self, _):
-        image = await self.cameraConnection.getCameraImage('FrontdoorEntry') if self.cameraConnection else None
-        return DOOR_BELL_MESSAGE, image
-
+            return
+        image = None
+        if deviceName in [self.DEVICE_1]:
+            image = await self.cameraConnection.getCameraImage('1') if self.cameraConnection else None
+        elif deviceName in [self.DEVICE_2]:
+            image = await self.cameraConnection.getCameraImage('4') if self.cameraConnection else None
+        await self._sendAppMessage(deviceName, image)
+        
     async def _handleGateState(self, payload):
         state = payload.get("svalue")
         self.logger.info(f"Received gate state update: {state}")
         if self.appEventHandler:
             self.appEventHandler.updateGateState(state)
 
-    async def _sendAppMessage(self, message, imageData=None):
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        message_with_timestamp = f"[{timestamp}] {message}"
-        payload = {'type': 'notification', 'message': message_with_timestamp}
+    async def _sendAppMessage(self, deviceName, imageData=None):
+        payload = {'type': 'notification', 'deviceName': deviceName}
         if imageData:
             payload['imageData'] = imageData
         await self.domoticzAppAPI.broadcastMessage(payload)
-        self.logger.info(f"Message broadcasted, with messageText: {message_with_timestamp}")
+        self.logger.info(f"Message broadcasted, with deviceName: {deviceName}")

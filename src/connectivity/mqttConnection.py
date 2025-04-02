@@ -12,7 +12,7 @@ class MqttConnection:
         self.logger = getLogger(__name__)
         self.broker = os.getenv('MQTT_HOST')
         self.port = int(os.getenv('MQTT_PORT'))
-        self.domoticzTopic = "domoticz/out/#"
+        self.topic = os.getenv('TOPIC')
         self.eventHandler = eventHandler
         self.client = mqtt.Client(client_id="DomoticzAppServer", callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
         self.client.on_connect = self.onConnect
@@ -35,8 +35,8 @@ class MqttConnection:
         self.logger.info(f"onConnect called with result code {rc}")
         if rc == 0:
             self.logger.info("Successfully connected to MQTT broker.")
-            client.subscribe(self.domoticzTopic)
-            self.logger.info(f"Subscribed to topic: {self.domoticzTopic}")
+            client.subscribe(self.topic)
+            self.logger.info(f"Subscribed to topic: {self.topic}")
         else:
             self.logger.error(f"Connection failed with result code {rc}")
 
