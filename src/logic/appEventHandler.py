@@ -21,7 +21,7 @@ class AppEventHandler:
 
     def updateGateState(self, state: str):
         self.gateState = state
-        self.logger.info(f"Gate state updated to: {state}")
+        self.logger.debug(f"Gate state updated to: {state}")
 
     async def handleAppMessage(self, payload):
         messageType = payload.get('type')
@@ -31,31 +31,22 @@ class AppEventHandler:
             await self._handleCameraImageRequest(payload)
 
     async def _handleGateOpenRequest(self, payload):
-        if not self.mqttConnection:
-            self.logger.error("MQTT connection not configured")
-            return
         if not self.gateToggleIdx:
-            self.logger.error("Gate toggle device index not configured")
+            self.logger.debug("Gate toggle device index not configured")
             return
         if self.gateState in ["1", "3"]:
-            self.logger.info(f"Ignoring request: Gate currently open (=1) or opening (=3) (state = {self.gateState})")
+            self.logger.debug(f"Ignoring request: Gate currently open (=1) or opening (=3) (state = {self.gateState})")
             return
         mqttPayload = {"command": "switchlight", "idx": self.gateToggleIdx, "switchcmd": "On"}
         self.mqttConnection.publish('domoticz/in', mqttPayload)
         self.logger.info(f"Gate open command sent: {mqttPayload}")
 
     async def _handleCameraImageRequest(self, payload):
-        if not self.cameraConnection:
-            self.logger.error("Camera connection not configured")
-            return
         cameraId = payload.get('cameraId')
-        if not cameraId:
-            self.logger.error("No camera ID provided")
-            return
         imageData = await self.cameraConnection.getCameraImage(cameraId)
         if imageData:
             payload = {"type": "cameraImage", "cameraId": cameraId, "imageData": imageData}
             await self.domoticzAppAPI.broadcastMessage(payload)
             self.logger.info(f"Retrieved and published image from camera {cameraId}")
         else:
-            self.logger.warning(f"Failed to retrieve image from camera {cameraId}")
+            self.logger.warning(f"No imagedata available from camera {cameraId}")

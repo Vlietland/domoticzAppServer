@@ -84,16 +84,12 @@ class MqttConnection:
         if not self.isConnected():
             self.logger.error("Cannot publish: MQTT client not connected")
             return False
-        try:
-            if isinstance(payload, dict):
-                payload = json.dumps(payload)
-            result = self.client.publish(topic, payload)
-            if result.rc == 0:
-                self.logger.info(f"Published message to {topic}")
-                return True
-            else:
-                self.logger.error(f"Failed to publish message to {topic}, result code: {result.rc}")
-                return False
-        except Exception as e:
-            self.logger.error(f"Error publishing message: {e}")
+        if isinstance(payload, dict):
+            payload = json.dumps(payload)
+        result = self.client.publish(topic, payload)
+        if result.rc == 0:
+            self.logger.info(f"Published message to {topic}")
+            return True
+        else:
+            self.logger.error(f"Failed to publish message to {topic}, result code: {result.rc}")
             return False
