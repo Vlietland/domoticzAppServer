@@ -7,7 +7,6 @@ from connectivity.cameraConnection import CameraConnection
 from connectivity.mqttConnection import MqttConnection
 from logic.mqttEventHandler import MqttEventHandler
 from logic.appEventHandler import AppEventHandler
-from testing.domoticzAppTestClient import DomoticzAppTestClient
 from utils.logger import getLogger
 
 logger = getLogger(__name__)
@@ -66,11 +65,6 @@ class DomoticzAppServer:
 
     async def main(self):
         await self.startServer()
-
-        if os.getenv('TESTING') == "YES":
-            domoticzAppTestClient = DomoticzAppTestClient()
-            self.domoticzAppTestTask = asyncio.create_task(domoticzAppTestClient.start())
-
         stopEvent = asyncio.Event()
 
         def stop():
