@@ -8,12 +8,12 @@ import asyncio
 from utils.logger import getLogger
 
 class MqttConnection:
-    def __init__(self, eventHandler, callback_api_version=None):
+    def __init__(self, mqttEventHandler, callback_api_version=None):
         self.logger = getLogger(__name__)
         self.broker = os.getenv('MQTT_HOST')
         self.port = int(os.getenv('MQTT_PORT'))
         self.topic = os.getenv('TOPIC')
-        self.eventHandler = eventHandler
+        self.mqttEventHandler = mqttEventHandler
         self.client = mqtt.Client(client_id="DomoticzAppServer", callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
         self.client.on_connect = self.onConnect
         self.client.on_message = self.onMessage
@@ -44,7 +44,7 @@ class MqttConnection:
         payload = message.payload.decode('utf-8')
         self.logger.info(f"Received MQTT message on topic {message.topic}: {payload}")
         parsedPayload = json.loads(payload)
-        if self.eventHandler:
+        if self.mqttEventHandler:
             self.messageQueue.put((message.topic, parsedPayload))
     
     async def processMessageQueue(self):
@@ -52,7 +52,7 @@ class MqttConnection:
         while not self.stopEvent.is_set():
             while not self.messageQueue.empty():
                 topic, payload = self.messageQueue.get_nowait()
-                await self.eventHandler.handleMqttMessage(topic, payload)
+                await self.mqttEventHandler.handleMqttMessage(topic, payload)
             await asyncio.sleep(0.1)
         self.logger.info("MQTT message queue processor stopped")
 
