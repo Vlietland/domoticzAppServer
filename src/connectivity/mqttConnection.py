@@ -29,7 +29,7 @@ class MqttConnection:
             self.logger.info("Connection initiated")
         except Exception as e:
             self.logger.error(f"Failed to connect to MQTT broker: {e}")
-            raise
+            #raise
 
     def onConnect(self, client, userdata, flags, rc, properties=None):
         self.logger.info(f"onConnect called with result code {rc}")
