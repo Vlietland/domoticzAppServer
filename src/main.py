@@ -32,6 +32,7 @@ class DomoticzAppServer:
 
         mqttEventHandler.setCameraConnection(cameraConnection)
         mqttEventHandler.setDomoticzAppAPI(self.domoticzAppAPI)
+        mqttEventHandler.setAppEventHandler(appEventHandler)
 
         self.mqttConnection.start()
 
