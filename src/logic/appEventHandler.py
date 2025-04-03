@@ -19,7 +19,7 @@ class AppEventHandler:
     def setDomoticzAppAPI(self, domoticzAppAPI):
         self.domoticzAppAPI = domoticzAppAPI
 
-    def setGateState(self, state: str):
+    def setGateState(self, state):
         self.gateState = state
         self.logger.debug(f"Gate state updated to: {state}")
 

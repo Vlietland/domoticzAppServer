@@ -28,15 +28,16 @@ class MqttEventHandler:
 
     async def handleMqttMessage(self, topic, payload):
         deviceName = topic.split("/")[-1]
+        self.logger.debug(f"Message received of device: {deviceName}")
         if deviceName in [self.DEVICE_1, self.DEVICE_2, self.DEVICE_3, self.DEVICE_4, self.DEVICE_5]:
             await self._sendAppMessage(deviceName)
         elif deviceName == self.DEVICE_6:
-            await self._handleGateState(deviceName)
+            await self._handleGateState(payload)
         else:
             self.logger.debug(f"Not a device that needs to be handled: {deviceName}")
 
     async def _handleGateState(self, payload):
-        state = payload.get("svalue")
+        state = payload.get("svalue1")
         self.logger.info(f"Received gate state update: {state}")
         if self.appEventHandler:
             self.appEventHandler.setGateState(state)
