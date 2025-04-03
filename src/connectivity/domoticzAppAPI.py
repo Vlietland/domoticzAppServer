@@ -5,10 +5,9 @@ from aiohttp import web
 from utils.logger import getLogger
 
 class DomoticzAppAPI:
-    def __init__(self, eventHandler):
+    def __init__(self, appEventHandler):
         self.logger = getLogger(__name__)
-        self.eventHandler = eventHandler
-        self.messageHandler = eventHandler
+        self.appEventHandler = appEventHandler
         self.activeConnections = set()
         self.app = web.Application()
         self.app.add_routes([web.get('/app', self.handleConnection), web.get('/health', self.healthCheck)])
@@ -24,8 +23,8 @@ class DomoticzAppAPI:
 
     async def processMessage(self, message):
             payload = json.loads(message)
-            if self.messageHandler:
-                await self.messageHandler.handleAppMessage(payload)
+            if self.appEventHandler:
+                await self.appEventHandler.handleAppMessage(payload)
 
     async def broadcastMessage(self, payload):
         for connection in list(self.activeConnections):
