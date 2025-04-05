@@ -5,62 +5,73 @@ from aiohttp import web
 from connectivity.domoticzAppAPI import DomoticzAppAPI
 from connectivity.cameraConnection import CameraConnection
 from connectivity.mqttConnection import MqttConnection
-from logic.mqttEventHandler import MqttEventHandler
-from logic.appEventHandler import AppEventHandler
+from controller.appMessageHandler import AppMessageHandler
+from controller.cameraHandler import CameraEventHandler
+from controller.gateStateHandler import GateStateHandler
+from controller.mqttMessageHandler import MqttMessageHandler
+from controller.notificationHandler import NotificationHandler
+from model.messageFilter import MessageFilter
+from model.notificationQueue import NotificationQueue
 from utils.logger import getLogger
 
 logger = getLogger(__name__)
 
 class DomoticzAppServer:
     def __init__(self):
-        self.domoticzAppAPI = None
-        self.webSocketRunner = None
-        self.mqttConnection = None
-        self.domoticzAppTestTask = None
+        self.__domoticzAppAPI = None
+        self.__webSocketRunner = None
+        self.__mqttConnection = None
 
     async def startServer(self):
-        appEventHandler = AppEventHandler()    
-        mqttEventHandler = MqttEventHandler()
-
+        messageFilter = MessageFilter()
         cameraConnection = CameraConnection()
-        self.domoticzAppAPI = DomoticzAppAPI(appEventHandler)
-        self.mqttConnection = MqttConnection(mqttEventHandler)
-
-        appEventHandler.setCameraConnection(cameraConnection)
-        appEventHandler.setDomoticzAppAPI(self.domoticzAppAPI)
-        appEventHandler.setMqttConnection(self.mqttConnection)
-
-        mqttEventHandler.setCameraConnection(cameraConnection)
-        mqttEventHandler.setDomoticzAppAPI(self.domoticzAppAPI)
-        mqttEventHandler.setAppEventHandler(appEventHandler)
-
-        self.mqttConnection.start()
-
-        self.webSocketRunner = web.AppRunner(self.domoticzAppAPI.app)
+        self.__domoticzAppAPI = DomoticzAppAPI(handleAppMessageCallback=None)
+        self.__mqttConnection = MqttConnection(handleMqttMessageCallback=None, messageFilter=messageFilter)
+        
+        notificationQueue = NotificationQueue()
+        notificationHandler = NotificationHandler(
+            self.__domoticzAppAPI.broadcastMessage,
+            notificationQueue.getNotifications,
+            notificationQueue.deleteNotifications
+        )
+        gateStateHandler = GateStateHandler()
+        cameraEventHandler = CameraEventHandler(
+            cameraConnection.getCameraImage,
+            self.__domoticzAppAPI.broadcastMessage
+        )
+        
+        mqttMessageHandler = MqttMessageHandler(
+            gateStateHandler.getGateDevice,
+            gateStateHandler.setGateState, 
+            notificationQueue.storeNotification,
+            notificationHandler.notifyNewMessage
+        )
+        appMessageHandler = AppMessageHandler(
+            notificationHandler.handleGetNotificationsRequest,
+            notificationHandler.handleDeleteNotificationsRequest,            
+            cameraEventHandler.handleCameraImageRequest,
+            gateStateHandler.handleOpenGateRequest
+        )
+        self.__domoticzAppAPI.setHandleAppMessageCallback(appMessageHandler.handleAppMessage)
+        self.__mqttConnection.setHandleMqttMessageCallback(mqttMessageHandler.handleMqttMessageCallback)
+        
+        self.__mqttConnection.connect()
+        self.__webSocketRunner = web.AppRunner(self.__domoticzAppAPI.getApp())
         host = os.getenv('SERVER_HOST')
         port = int(os.getenv('SERVER_PORT'))
 
-        await self.webSocketRunner.setup()
-        site = web.TCPSite(self.webSocketRunner, host, port)
+        await self.__webSocketRunner.setup()
+        site = web.TCPSite(self.__webSocketRunner, host, port)
         await site.start()
         logger.info(f"Domoticz app server started on {host}:{port}")
 
     async def shutdown(self):
         logger.info("Shutting down server and client...")
         try:
-            for ws in list(self.domoticzAppAPI.activeConnections):
+            for ws in list(self.__domoticzAppAPI.getActiveConnections()):
                 await ws.close()
-            self.domoticzAppAPI.activeConnections.clear()
-
-            if self.domoticzAppTestTask:
-                await self.domoticzAppTestTask.get_loop().run_until_complete(self.domoticzAppTestTask.result().stop())
-                try:
-                    await self.domoticzAppTestTask
-                except asyncio.CancelledError:
-                    logger.info("WebSocket test client stopped.")
-
-            self.mqttConnection.stop()
-            await self.webSocketRunner.cleanup()
+            self.__domoticzAppAPI.getActiveConnections().clear()
+            await self.__webSocketRunner.cleanup()
         except Exception as e:
             logger.error(f"Error during shutdown: {e}")
 
@@ -86,4 +97,4 @@ if __name__ == "__main__":
         asyncio.run(server.main())
     except Exception as e:
         logger.error(f"Server error: {e}")
-        #raise
+        raise
