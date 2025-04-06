@@ -6,7 +6,7 @@ class CameraEventHandler:
         self.getCameraImage = getCameraImage
         self.broadcastMessage = broadcastMessage
 
-    async def handleCameraImageRequest(self, payload):
+    async def onCameraImageRequest(self, payload):
         cameraId = payload.get('cameraId')
         imageData = await self.getCameraImage(cameraId)
         if imageData:

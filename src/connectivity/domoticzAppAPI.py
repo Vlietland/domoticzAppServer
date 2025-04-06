@@ -23,7 +23,7 @@ class DomoticzAppAPI:
     async def handleConnection(self, request):
         ws = web.WebSocketResponse()
         await ws.prepare(request)
-        self._activeConnections.add(ws)
+        self.__activeConnections.add(ws)
         async for msg in ws:
             if msg.type == web.WSMsgType.TEXT:
                 await self.processMessage(msg.data)

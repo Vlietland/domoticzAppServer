@@ -2,14 +2,14 @@ import os
 from utils.logger import getLogger
 
 class MqttMessageHandler:
-    def __init__(self, getGateDevice, setGateState, storeNotification, notifyNewMessage):
+    def __init__(self, getGateDevice, setGateState, storeNotification, notifyNewAlert):
         self.__logger = getLogger(__name__)
         self.__getGateDevice = getGateDevice
         self.__setGateState = setGateState
         self.__storeNotification = storeNotification
-        self.__notifyNewMessage = notifyNewMessage
+        self.__notifyNewAlert = notifyNewAlert
 
-    def handleMqttMessageCallback(self, topic, payload):
+    def onMqttMessageCallback(self, topic, payload):
         deviceName = topic.split("/")[-1]
         if deviceName == self.__getGateDevice:
             self.__handleGateState(payload)
@@ -28,7 +28,7 @@ class MqttMessageHandler:
         nvalue = payload.get("nvalue")
         if nvalue == 1:
             self.__storeNotification(deviceName)
-            self.__notifyNewMessage()
+            self.__notifyNewAlert(deviceName)
             self.__logger.info(f"Device notification stored in the notifiation queue: {deviceName}")
         else:
             self.__logger.debug(f"Device state '{nvalue}' received. Ignoring.")

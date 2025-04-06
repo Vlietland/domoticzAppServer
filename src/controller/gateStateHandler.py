@@ -15,7 +15,7 @@ class GateStateHandler:
     def getGateDevice(self):
         return gateDevice
 
-    async def handleOpenGateRequest(self, payload):
+    async def onOpenGateRequest(self, payload):
         if not self.gateToggleIdx:
             self.logger.debug("Gate toggle device index not configured")
             return

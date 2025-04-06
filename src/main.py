@@ -9,9 +9,9 @@ from controller.appMessageHandler import AppMessageHandler
 from controller.cameraHandler import CameraEventHandler
 from controller.gateStateHandler import GateStateHandler
 from controller.mqttMessageHandler import MqttMessageHandler
-from controller.notificationHandler import NotificationHandler
+from controller.alertHandler import AlertHandler
 from model.messageFilter import MessageFilter
-from model.notificationQueue import NotificationQueue
+from model.alertQueue import AlertQueue
 from utils.logger import getLogger
 
 logger = getLogger(__name__)
@@ -28,11 +28,11 @@ class DomoticzAppServer:
         self.__domoticzAppAPI = DomoticzAppAPI(handleAppMessageCallback=None)
         self.__mqttConnection = MqttConnection(handleMqttMessageCallback=None, messageFilter=messageFilter)
         
-        notificationQueue = NotificationQueue()
-        notificationHandler = NotificationHandler(
+        alertQueue = AlertQueue()
+        alertHandler = AlertHandler(
             self.__domoticzAppAPI.broadcastMessage,
-            notificationQueue.getNotifications,
-            notificationQueue.deleteNotifications
+            alertQueue.getAlerts,
+            alertQueue.deleteAlerts
         )
         gateStateHandler = GateStateHandler()
         cameraEventHandler = CameraEventHandler(
@@ -43,17 +43,17 @@ class DomoticzAppServer:
         mqttMessageHandler = MqttMessageHandler(
             gateStateHandler.getGateDevice,
             gateStateHandler.setGateState, 
-            notificationQueue.storeNotification,
-            notificationHandler.notifyNewMessage
+            alertQueue.storeAlert,
+            alertHandler.onNewAlerts
         )
         appMessageHandler = AppMessageHandler(
-            notificationHandler.handleGetNotificationsRequest,
-            notificationHandler.handleDeleteNotificationsRequest,            
-            cameraEventHandler.handleCameraImageRequest,
-            gateStateHandler.handleOpenGateRequest
+            alertHandler.onGetAlertsRequest,
+            alertHandler.onDeleteAlertsRequest,            
+            cameraEventHandler.onCameraImageRequest,
+            gateStateHandler.onOpenGateRequest
         )
-        self.__domoticzAppAPI.setHandleAppMessageCallback(appMessageHandler.handleAppMessage)
-        self.__mqttConnection.setHandleMqttMessageCallback(mqttMessageHandler.handleMqttMessageCallback)
+        self.__domoticzAppAPI.setHandleAppMessageCallback(appMessageHandler.onAppMessageCallback)
+        self.__mqttConnection.setHandleMqttMessageCallback(mqttMessageHandler.onMqttMessageCallback)
         
         self.__mqttConnection.connect()
         self.__webSocketRunner = web.AppRunner(self.__domoticzAppAPI.getApp())

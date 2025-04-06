@@ -10,13 +10,13 @@ class AppMessageHandler:
         self.__handleCameraImageRequest = handleCameraImageRequest
         self.__handleGateOpenRequest = handleGateOpenRequest
 
-    async def handleAppMessage(self, payload):
+    async def onAppMessageCallback(self, payload):
         messageType = payload.get('type')
-        if messageType == "getNotifications":
+        if messageType == "getAlerts":
             self.__handleGetNotificationsRequest()
-        elif messageType == "deleteNotifications":
+        elif messageType == "purgeAlerts":
             self.__handleDeleteNotificationsRequest()
         elif messageType == "getCameraImage":
             self.__handleCameraImageRequest(payload)
-        elif messageType == "opengate":
+        elif messageType == "openGateCommand":
             self.__handleGateOpenRequest(payload)
