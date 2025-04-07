@@ -16,8 +16,12 @@ class AlertHandler:
         self.__logger.info(f"Retrieved {len(alerts)} alerts from AlertQueue.")
         message = {'type': 'alerts', 'alertList': alerts}
         try:
-            asyncio.create_task(self.__broadcastMessage(message))
+            loop = asyncio.get_running_loop()
+            loop.create_task(self.__broadcastMessage(message))
             self.__logger.info("Alert sent to clients")
+        except RuntimeError:
+            asyncio.run(self.__broadcastMessage(message))
+            self.__logger.info("Alert sent to clients using asyncio.run")
         except Exception as e:
             self.__logger.error(f"Failed to send alert: {e}")
 
@@ -27,5 +31,10 @@ class AlertHandler:
 
     def onNewAlerts(self, deviceName):
         message = {'type': 'alerts', 'deviceName': deviceName}        
-        asyncio.create_task(self.__broadcastMessage(message))
-        self.__logger.info(f"Sent to the websocket clients :{message}")
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self.__broadcastMessage(message))
+            self.__logger.info(f"Sent to the websocket clients :{message}")
+        except RuntimeError:
+            asyncio.run(self.__broadcastMessage(message))
+            self.__logger.info(f"Sent to the websocket clients using asyncio.run :{message}")
