@@ -11,7 +11,6 @@ class MqttMessageHandler:
 
     def onMqttMessageCallback(self, topic, payload):
         deviceName = topic.split("/")[-1]
-        print(self.__getGateDevice())
         if deviceName == self.__getGateDevice():
             self.__handleGateState(payload)
         else:
