@@ -7,7 +7,7 @@ class AlertHandler:
         self.__broadcastMessage = broadcastMessage
         self.__getAlerts = getAlerts
         self.__deleteAlerts = deleteAlerts
-        self.__localQueue = asyncio.Queue()
+        self.__broadcastQueue = asyncio.Queue()
         asyncio.create_task(self.__process_notifications())
         self.__main_loop = asyncio.get_event_loop()
 
@@ -19,7 +19,7 @@ class AlertHandler:
         self.__logger.info(f"Retrieved {len(alerts)} alerts from AlertQueue.")
         message = {'type': 'alerts', 'alertList': alerts}
         try:
-            asyncio.run_coroutine_threadsafe(self.__localQueue.put(message), self.__main_loop)
+            asyncio.run_coroutine_threadsafe(self.__broadcastQueue.put(message), self.__main_loop)
             self.__logger.info(f"Message stored in the async queue: {message}")            
             self.__logger.info("Alert sent to clients")
         except Exception as e:
@@ -32,18 +32,18 @@ class AlertHandler:
     def onNotification(self, deviceName):
         message = {'type': 'notification', 'deviceName': deviceName}
         try:
-            asyncio.run_coroutine_threadsafe(self.__localQueue.put(message), self.__main_loop)
+            asyncio.run_coroutine_threadsafe(self.__broadcastQueue.put(message), self.__main_loop)
             self.__logger.info(f"Message stored in the async queue: {message}")            
         except Exception as e:
             self.__logger.error(f"Failed to queue notification: {e}")
 
     async def __process_notifications(self):
         while True:
-            try:
-                deviceName = await self.__localQueue.get()
-                message = {'type': 'notification', 'deviceName': deviceName}
-                await self.__broadcastMessage(message)
-                self.__logger.info(f"Sent to the websocket clients: {message}")
-                self.__localQueue.task_done()
-            except Exception as e:
-                self.__logger.error(f"Error processing notification: {e}")
+            if self.__broadcastQueue.empty():
+                await asyncio.sleep(0.1)
+                continue                            
+            deviceName = await self.__broadcastQueue.get()
+            message = {'type': 'notification', 'deviceName': deviceName}
+            await self.__broadcastMessage(message)
+            self.__logger.info(f"Sent to the websocket clients: {message}")
+            self.__broadcastQueue.task_done()

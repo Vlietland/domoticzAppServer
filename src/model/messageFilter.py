@@ -15,9 +15,9 @@ class MessageFilter:
     def isMessageValid(self, topic, payload):
         deviceName = topic.split("/")[-1]
         if self.allowedDevices and deviceName not in self.allowedDevices:
-            self.logger.debug(f"Message rejected. Device '{deviceName}' not in allowed devices.")
+            self.logger.debug(f"Message ignored. Device '{deviceName}' not in allowed devices.")
             return False
         if not isinstance(payload, dict):
-            self.logger.debug("Message rejected. Payload is not a dictionary.")
+            self.logger.debug("Message ignored. Payload is not a dictionary.")
             return False
         return True
