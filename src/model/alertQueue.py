@@ -1,22 +1,23 @@
-import queue
+import time
+from datetime import datetime
 from utils.logger import getLogger
 
 class AlertQueue:
     def __init__(self):
         self.__logger = getLogger(__name__)
-        self.__alertQueue = queue.Queue()
+        self.__alertQueue = []
 
     def storeAlert(self, deviceName):
-        self.__alertQueue.put((deviceName))
-
+        alert = {'timestamp': time.time(), 'deviceName': deviceName}
+        self.__alertQueue.append(alert)
+        self.__logger.debug(f"Stored alert for device: {deviceName} at {datetime.fromtimestamp(alert['timestamp']).strftime('%Y-%m-%d %H:%M:%S')}")
+        print(self.getAlerts())
+        
     def getAlerts(self):
-        devices = []
-        while not self.__alertQueue.empty():
-            devices.append(self.__alertQueue.get_nowait())
-        self.__logger.debug(f"Retrieved {len(devices)} alerts from queue.")
-        return devices
-
+        self.__logger.debug(f"Retrieved {len(self.__alertQueue)} alerts from queue.")
+        return list(self.__alertQueue)
+        
     def deleteAlerts(self):
-        while not self.__alertQueue.empty():
-            self.__alertQueue.get_nowait()
-        self.__logger.debug("All alerts have been deleted.")
+        queueSize = len(self.__alertQueue)
+        self.__alertQueue.clear()
+        self.__logger.debug(f"Deleted all {queueSize} alerts from the queue.")
