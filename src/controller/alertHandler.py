@@ -14,9 +14,9 @@ class AlertHandler:
     def onGetAlertsRequest(self):        
         alerts = self.__getAlerts()
         self.__logger.info(f"Retrieved {len(alerts)} alerts from AlertQueue.")
-        payload = {'type': 'alerts', 'payload': alerts}
+        message = {'type': 'alerts', 'alertList': alerts}
         try:
-            asyncio.create_task(self.__broadcastMessage(payload))
+            asyncio.create_task(self.__broadcastMessage(message))
             self.__logger.info("Alert sent to clients")
         except Exception as e:
             self.__logger.error(f"Failed to send alert: {e}")
@@ -25,6 +25,7 @@ class AlertHandler:
         self.__deleteAlerts()
         self.__logger.info(f"Alerts deleted")
 
-    def onNewAlerts(self):
-        self.__broadcastMessage({"type": "notification"})
-        self.__logger.info("Sent to the websocket clients that a new alert is available")
+    def onNewAlerts(self, deviceName):
+        message = {'type': 'alerts', 'deviceName': deviceName}        
+        asyncio.create_task(self.__broadcastMessage(message))
+        self.__logger.info(f"Sent to the websocket clients :{message}")
