@@ -1,5 +1,5 @@
-from utils.logger import getLogger
 import asyncio
+from utils.logger import getLogger
 
 class AlertHandler:
     def __init__(self, broadcastMessage, getAlerts, deleteAlerts):
@@ -7,27 +7,43 @@ class AlertHandler:
         self.__broadcastMessage = broadcastMessage
         self.__getAlerts = getAlerts
         self.__deleteAlerts = deleteAlerts
+        self.__localQueue = asyncio.Queue()
+        asyncio.create_task(self.__process_notifications())
+        self.__main_loop = asyncio.get_event_loop()
 
     def setDomoticzAppAPI(self, domoticzAppAPI):
         self.__domoticzAppAPI = domoticzAppAPI
 
-    async def onGetAlertsRequest(self):        
+    def onGetAlertsRequest(self):        
         alerts = self.__getAlerts()
         self.__logger.info(f"Retrieved {len(alerts)} alerts from AlertQueue.")
         message = {'type': 'alerts', 'alertList': alerts}
         try:
-            await self.__broadcastMessage(message)
+            asyncio.run_coroutine_threadsafe(self.__localQueue.put(message), self.__main_loop)
+            self.__logger.info(f"Message stored in the async queue: {message}")            
+            self.__logger.info("Alert sent to clients")
         except Exception as e:
             self.__logger.error(f"Failed to send alert: {e}")
 
     def onDeleteAlertsRequest(self):        
         self.__deleteAlerts()
-        self.__logger.info(f"Alerts deleted")
+        self.__logger.info("Alerts deleted")
 
-    async def onNotification(self, deviceName):
-        message = {'type': 'notification', 'deviceName': deviceName}        
+    def onNotification(self, deviceName):
+        message = {'type': 'notification', 'deviceName': deviceName}
         try:
-            await self.__broadcastMessage(message)
-            self.__logger.info(f"Sent to the websocket clients :{message}")
+            asyncio.run_coroutine_threadsafe(self.__localQueue.put(message), self.__main_loop)
+            self.__logger.info(f"Message stored in the async queue: {message}")            
         except Exception as e:
-            self.__logger.error(f"Failed to send notification: {e}")
+            self.__logger.error(f"Failed to queue notification: {e}")
+
+    async def __process_notifications(self):
+        while True:
+            try:
+                deviceName = await self.__localQueue.get()
+                message = {'type': 'notification', 'deviceName': deviceName}
+                await self.__broadcastMessage(message)
+                self.__logger.info(f"Sent to the websocket clients: {message}")
+                self.__localQueue.task_done()
+            except Exception as e:
+                self.__logger.error(f"Error processing notification: {e}")
