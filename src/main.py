@@ -34,7 +34,7 @@ class DomoticzAppServer:
             alertQueue.getAlerts,
             alertQueue.deleteAlerts
         )
-        gateStateHandler = GateStateHandler()
+        gateStateHandler = GateStateHandler(self.__mqttConnection.publish)
         cameraEventHandler = CameraEventHandler(
             cameraConnection.getCameraImage,
             self.__domoticzAppAPI.broadcastMessage

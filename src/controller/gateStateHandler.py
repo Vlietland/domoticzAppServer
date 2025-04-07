@@ -2,11 +2,12 @@ import os
 from utils.logger import getLogger
 
 class GateStateHandler:
-    def __init__(self):
+    def __init__(self, publish):
         self.logger = getLogger(__name__)
         self.gateDevice = os.getenv('DEVICE_6')
         self.gateState = "0"
-        self.gateToggleIdx = int(os.getenv('GATE_TOGGLE_IDX'))        
+        self.gateToggleIdx = int(os.getenv('GATE_TOGGLE_IDX')) 
+        self.publish = publish               
 
     def setGateState(self, state):
         self.gateState = state
@@ -23,6 +24,6 @@ class GateStateHandler:
             self.logger.debug(f"Ignoring request: Gate currently open (=1) or opening (=3) (state = {self.gateState})")
             return
         mqttPayload = {"command": "switchlight", "idx": self.gateToggleIdx, "switchcmd": "On"}
-        self.mqttConnection.publish('domoticz/in', mqttPayload)
+        self.publish('domoticz/in', mqttPayload)
         self.logger.info(f"Gate open command sent: {mqttPayload}")
 
