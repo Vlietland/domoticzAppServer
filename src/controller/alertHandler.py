@@ -29,8 +29,8 @@ class AlertHandler:
         self.__deleteAlerts()
         self.__logger.info(f"Alerts deleted")
 
-    def onNewAlerts(self, deviceName):
-        message = {'type': 'alerts', 'deviceName': deviceName}        
+    def onNotification(self, deviceName):
+        message = {'type': 'notification', 'deviceName': deviceName}        
         try:
             loop = asyncio.get_running_loop()
             loop.create_task(self.__broadcastMessage(message))
