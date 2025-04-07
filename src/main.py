@@ -44,7 +44,7 @@ class DomoticzAppServer:
             gateStateHandler.getGateDevice,
             gateStateHandler.setGateState, 
             alertQueue.storeAlert,
-            alertHandler.onNewAlerts
+            alertHandler.onNotification
         )
         appMessageHandler = AppMessageHandler(
             alertHandler.onGetAlertsRequest,
