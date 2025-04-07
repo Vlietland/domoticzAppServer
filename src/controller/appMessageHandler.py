@@ -19,4 +19,4 @@ class AppMessageHandler:
         elif messageType == "getCameraImage":
             await self.__handleCameraImageRequest(payload)
         elif messageType == "openGateCommand":
-            self.__handleGateOpenRequest(payload)
+            await self.__handleGateOpenRequest(payload)
