@@ -71,4 +71,4 @@ class MqttConnection:
                 break
             except Exception as e:
                 self.logger.error(f"Reconnect attempt failed: {e}")
-                asyncio.sleep(5)  # Retry every 5 seconds
+                asyncio.sleep(5)

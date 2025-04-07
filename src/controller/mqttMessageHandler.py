@@ -18,11 +18,7 @@ class MqttMessageHandler:
 
     def __handleGateState(self, payload):
         svalue1 = payload.get("svalue1")
-        if svalue1 in ["1", "3"]:
-            self.__setGateState(svalue1)
-            self.__logger.info(f"Gate state updated to: {svalue1}")
-        else:
-            self.__logger.debug(f"Gate state '{svalue1}' received. Ignoring.")
+        self.__setGateState(svalue1)
 
     def __handleNotificationDevice(self, deviceName, payload):
         nvalue = payload.get("nvalue")
