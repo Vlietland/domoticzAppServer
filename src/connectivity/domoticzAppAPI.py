@@ -47,6 +47,7 @@ class DomoticzAppAPI:
                 continue
             try:
                 await connection.send_str(json.dumps(payload))
+                self.__logger.info("Alert sent to client")                
             except ConnectionResetError as e:
                 self.__logger.error(f"ConnectionResetError while sending message: {e}")
                 self.__activeConnections.remove(connection)

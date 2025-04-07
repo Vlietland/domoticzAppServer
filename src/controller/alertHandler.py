@@ -11,16 +11,12 @@ class AlertHandler:
     def setDomoticzAppAPI(self, domoticzAppAPI):
         self.__domoticzAppAPI = domoticzAppAPI
 
-    def onGetAlertsRequest(self):        
+    async def onGetAlertsRequest(self):        
         alerts = self.__getAlerts()
         self.__logger.info(f"Retrieved {len(alerts)} alerts from AlertQueue.")
         message = {'type': 'alerts', 'alertList': alerts}
         try:
-            loop = asyncio.get_running_loop()
-            loop.create_task(self.__broadcastMessage(message))
-            self.__logger.info("Alert sent to clients")
-        except RuntimeError:
-            self.__logger.info("Alert sent to clients using asyncio.run")
+            await self.__broadcastMessage(message)
         except Exception as e:
             self.__logger.error(f"Failed to send alert: {e}")
 
@@ -28,11 +24,10 @@ class AlertHandler:
         self.__deleteAlerts()
         self.__logger.info(f"Alerts deleted")
 
-    def onNotification(self, deviceName):
+    async def onNotification(self, deviceName):
         message = {'type': 'notification', 'deviceName': deviceName}        
         try:
-            loop = asyncio.get_running_loop()
-            loop.create_task(self.__broadcastMessage(message))
+            await self.__broadcastMessage(message)
             self.__logger.info(f"Sent to the websocket clients :{message}")
-        except RuntimeError:
-            self.__logger.info(f"Sent to the websocket clients using asyncio.run :{message}")
+        except Exception as e:
+            self.__logger.error(f"Failed to send notification: {e}")
