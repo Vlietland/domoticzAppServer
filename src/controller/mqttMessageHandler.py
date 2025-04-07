@@ -25,7 +25,7 @@ class MqttMessageHandler:
         if nvalue == 1:
             self.__storeAlert(deviceName)
             self.__onNotification(deviceName)
-            self.__logger.info(f"Device notification stored in the notifiation queue: {deviceName}")
+            self.__logger.info(f"Device notification stored in the notification queue: {deviceName}")
         else:
             self.__logger.debug(f"Device state '{nvalue}' received. Ignoring.")
 
