@@ -14,18 +14,18 @@ class MqttMessageHandler:
         if deviceName == self.__getGateDevice():
             self.__handleGateState(payload)
         else:
-            self.__handleNotificationDevice(deviceName, payload)
+            self.__handleAlertDevice(deviceName, payload)
 
     def __handleGateState(self, payload):
         svalue1 = payload.get("svalue1")
         self.__setGateState(svalue1)
 
-    def __handleNotificationDevice(self, deviceName, payload):
+    def __handleAlertDevice(self, deviceName, payload):
         nvalue = payload.get("nvalue")
         if nvalue == 1:
             self.__storeAlert(deviceName)
             self.__onNotification(deviceName)
-            self.__logger.info(f"Device notification stored in the notification queue: {deviceName}")
+            self.__logger.info(f"Device alert stored in the alert queue: {deviceName}")
         else:
             self.__logger.debug(f"Device state '{nvalue}' received. Ignoring.")
 
