@@ -42,8 +42,7 @@ class AlertHandler:
             if self.__broadcastQueue.empty():
                 await asyncio.sleep(0.1)
                 continue                            
-            deviceName = await self.__broadcastQueue.get()
-            message = {'type': 'notification', 'deviceName': deviceName}
+            message = await self.__broadcastQueue.get()
             await self.__broadcastMessage(message)
             self.__logger.info(f"Sent to the websocket clients: {message}")
             self.__broadcastQueue.task_done()
