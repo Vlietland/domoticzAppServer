@@ -39,16 +39,16 @@ class DomoticzAppAPI:
         except json.JSONDecodeError:
             self.__logger.error("Failed to parse incoming message as JSON.")
 
-    def broadcastMessage(self, payload):
+    async def broadcastMessage(self, payload):
         for connection in list(self.__activeConnections):
             if connection.closed:
                 self.__logger.warning("Removing closed connection from _activeConnections.")
                 self.__activeConnections.remove(connection)
                 continue
             try:
-                connection.send_str(json.dumps(payload))
+                await connection.send_str(json.dumps(payload))
             except ConnectionResetError as e:
-                self.__.error(f"ConnectionResetError while sending message: {e}")
+                self.__logger.error(f"ConnectionResetError while sending message: {e}")
                 self.__activeConnections.remove(connection)
             except Exception as e:
                 self.__logger.error(f"Unexpected error while sending message: {e}")

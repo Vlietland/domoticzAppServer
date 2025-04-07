@@ -17,6 +17,6 @@ class AppMessageHandler:
         elif messageType == "purgeAlerts":
             self.__handleDeleteNotificationsRequest()
         elif messageType == "getCameraImage":
-            self.__handleCameraImageRequest(payload)
+            await self.__handleCameraImageRequest(payload)
         elif messageType == "openGateCommand":
             self.__handleGateOpenRequest(payload)
