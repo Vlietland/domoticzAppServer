@@ -11,10 +11,10 @@ class GateStateHandler:
 
     def setGateState(self, state):
         self.gateState = state
-        self.logger.info(f"Gate state for device '{self.gateDevice}' updated to: {self.validStates[state]}")
+        self.logger.info(f"Gate state for device '{self.gateDevice}' updated to: {self.gateState}")
 
     def getGateDevice(self):
-        return gateDevice
+        return self.gateDevice
 
     async def onOpenGateRequest(self, payload):
         if not self.gateToggleIdx:
