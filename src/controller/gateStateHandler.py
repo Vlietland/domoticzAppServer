@@ -27,3 +27,13 @@ class GateStateHandler:
         self.publish('domoticz/in', mqttPayload)
         self.logger.info(f"Gate open command sent: {mqttPayload}")
 
+    async def onCloseGateRequest(self, payload):
+        if not self.gateToggleIdx:
+            self.logger.debug("Gate toggle device index not configured")
+            return
+        if self.gateState in ["0", "2"]:
+            self.logger.debug(f"Ignoring request: Gate currently closed (=0) or closing (=2) (state = {self.gateState})")
+            return
+        mqttPayload = {"command": "switchlight", "idx": self.gateToggleIdx, "switchcmd": "On"}
+        self.publish('domoticz/in', mqttPayload)
+        self.logger.info(f"Gate close command sent: {mqttPayload}")
