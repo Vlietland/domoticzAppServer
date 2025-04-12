@@ -29,37 +29,23 @@ class DomoticzAppServer:
         self.__domoticzAppAPI = DomoticzAppAPI(handleAppMessageCallback=None)
         self.__mqttConnection = MqttConnection(handleMqttMessageCallback=None, messageFilter=messageFilter)
         
-        weatherHandler = WeatherHandler()
+        # Centralized enqueue method from the API
+        enqueueMessageCallback = self.__domoticzAppAPI.enqueueMessage
+
+        weatherHandler = WeatherHandler(enqueueMessageCallback) # Pass callback
 
         alertQueue = AlertQueue()
-        alertHandler = AlertHandler(
-            self.__domoticzAppAPI.broadcastMessage,
-            alertQueue.getAlerts,
-            alertQueue.deleteAlerts
-        )
+        alertHandler = AlertHandler(enqueueMessageCallback, alertQueue.getAlerts, alertQueue.deleteAlerts)
         
         gateStateHandler = GateStateHandler(self.__mqttConnection.publish)
-        cameraHandler = CameraHandler(
-            cameraConnection.getCameraImage,
-            self.__domoticzAppAPI.broadcastMessage
-        )
+        cameraHandler = CameraHandler(cameraConnection.getCameraImage, enqueueMessageCallback)
         
-        mqttMessageHandler = MqttMessageHandler(
-            gateStateHandler.getGateDevice,
-            gateStateHandler.setGateState, 
-            alertQueue.storeAlert,
-            alertHandler.onNotification,
-            weatherHandler.getWeatherDevice,
-            weatherHandler.onWeatherDataReceived
-        )
+        mqttMessageHandler = MqttMessageHandler(gateStateHandler.getGateDevice, gateStateHandler.setGateState, 
+            alertQueue.storeAlert,alertHandler.onNotification,
+            weatherHandler.getWeatherDevice, weatherHandler.onWeatherDataReceived)
 
-        appMessageHandler = AppMessageHandler(
-            alertHandler.onGetAlertsRequest,
-            alertHandler.onDeleteAlertsRequest,            
-            cameraHandler.onCameraImageRequest,
-            gateStateHandler.onOpenGateRequest,
-            gateStateHandler.onCloseGateRequest            
-        )
+        appMessageHandler = AppMessageHandler(alertHandler.onGetAlertsRequest, alertHandler.onDeleteAlertsRequest,            
+            cameraHandler.onCameraImageRequest, gateStateHandler.onOpenGateRequest, gateStateHandler.onCloseGateRequest)
         self.__domoticzAppAPI.setHandleAppMessageCallback(appMessageHandler.onAppMessageCallback)
         self.__mqttConnection.setHandleMqttMessageCallback(mqttMessageHandler.onMqttMessageCallback)
         
