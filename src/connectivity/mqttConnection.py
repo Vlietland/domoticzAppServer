@@ -38,7 +38,7 @@ class MqttConnection:
     def onMessage(self, client, userdata, message):
         payload = message.payload.decode('utf-8')
         topic = message.topic
-        self.logger.info(f"Received MQTT message on topic {topic}: {payload}")
+        self.logger.debug(f"Received MQTT message on topic {topic}: {payload}")
         try:
             parsedPayload = json.loads(payload)
         except json.JSONDecodeError:
@@ -49,7 +49,7 @@ class MqttConnection:
             return
         if self.handleMqttMessageCallback:
             self.handleMqttMessageCallback(message.topic, parsedPayload)
-            self.logger.info(f"ParsedPayload callback completed {parsedPayload}")
+            self.logger.debug(f"ParsedPayload callback completed {parsedPayload}")
 
     def publish(self, topic, payload):
         if isinstance(payload, dict):

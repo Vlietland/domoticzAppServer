@@ -6,9 +6,10 @@ from connectivity.domoticzAppAPI import DomoticzAppAPI
 from connectivity.cameraConnection import CameraConnection
 from connectivity.mqttConnection import MqttConnection
 from controller.appMessageHandler import AppMessageHandler
-from controller.cameraHandler import CameraEventHandler
+from controller.cameraHandler import CameraHandler
 from controller.gateStateHandler import GateStateHandler
 from controller.mqttMessageHandler import MqttMessageHandler
+from controller.weatherHandler import WeatherHandler
 from controller.alertHandler import AlertHandler
 from model.messageFilter import MessageFilter
 from model.alertQueue import AlertQueue
@@ -28,14 +29,17 @@ class DomoticzAppServer:
         self.__domoticzAppAPI = DomoticzAppAPI(handleAppMessageCallback=None)
         self.__mqttConnection = MqttConnection(handleMqttMessageCallback=None, messageFilter=messageFilter)
         
+        weatherHandler = WeatherHandler()
+
         alertQueue = AlertQueue()
         alertHandler = AlertHandler(
             self.__domoticzAppAPI.broadcastMessage,
             alertQueue.getAlerts,
             alertQueue.deleteAlerts
         )
+        
         gateStateHandler = GateStateHandler(self.__mqttConnection.publish)
-        cameraEventHandler = CameraEventHandler(
+        cameraHandler = CameraHandler(
             cameraConnection.getCameraImage,
             self.__domoticzAppAPI.broadcastMessage
         )
@@ -44,12 +48,15 @@ class DomoticzAppServer:
             gateStateHandler.getGateDevice,
             gateStateHandler.setGateState, 
             alertQueue.storeAlert,
-            alertHandler.onNotification
+            alertHandler.onNotification,
+            weatherHandler.getWeatherDevice,
+            weatherHandler.onWeatherDataReceived
         )
+
         appMessageHandler = AppMessageHandler(
             alertHandler.onGetAlertsRequest,
             alertHandler.onDeleteAlertsRequest,            
-            cameraEventHandler.onCameraImageRequest,
+            cameraHandler.onCameraImageRequest,
             gateStateHandler.onOpenGateRequest,
             gateStateHandler.onCloseGateRequest            
         )

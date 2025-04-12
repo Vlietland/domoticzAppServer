@@ -1,6 +1,6 @@
 from utils.logger import getLogger
 
-class CameraEventHandler:
+class CameraHandler:
     def __init__(self, getCameraImage, broadcastMessage):
         self.logger = getLogger(__name__)
         self.getCameraImage = getCameraImage
