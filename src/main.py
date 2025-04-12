@@ -50,7 +50,8 @@ class DomoticzAppServer:
             alertHandler.onGetAlertsRequest,
             alertHandler.onDeleteAlertsRequest,            
             cameraEventHandler.onCameraImageRequest,
-            gateStateHandler.onOpenGateRequest
+            gateStateHandler.onOpenGateRequest,
+            gateStateHandler.onCloseGateRequest            
         )
         self.__domoticzAppAPI.setHandleAppMessageCallback(appMessageHandler.onAppMessageCallback)
         self.__mqttConnection.setHandleMqttMessageCallback(mqttMessageHandler.onMqttMessageCallback)
