@@ -10,7 +10,9 @@ class MessageFilter:
         self.DEVICE_4 = os.getenv('DEVICE_4')
         self.DEVICE_5 = os.getenv('DEVICE_5')                        
         self.DEVICE_6 = os.getenv('DEVICE_6')
-        self.allowedDevices = allowedDevices or [self.DEVICE_1, self.DEVICE_2, self.DEVICE_3, self.DEVICE_4, self.DEVICE_5, self.DEVICE_6]
+        self.DEVICE_7 = os.getenv('DEVICE_7')        
+        self.allowedDevices = allowedDevices or [self.DEVICE_1, self.DEVICE_2, self.DEVICE_3, 
+                                                 self.DEVICE_4, self.DEVICE_5, self.DEVICE_6, self.DEVICE_7]
 
     def isMessageValid(self, topic, payload):
         deviceName = topic.split("/")[-1]
