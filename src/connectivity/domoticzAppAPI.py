@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from aiohttp import web
@@ -10,6 +11,9 @@ class DomoticzAppAPI:
         self.__activeConnections = set()
         self.__app = web.Application()
         self.__app.add_routes([web.get('/app', self.handleConnection)])
+        self.broadcastQueue = asyncio.Queue()
+        self.__mainLoop = asyncio.get_event_loop()
+        asyncio.create_task(self._processBroadcastQueue())
 
     def getActiveConnections(self):
         return list(self.__activeConnections)
@@ -39,18 +43,44 @@ class DomoticzAppAPI:
         except json.JSONDecodeError:
             self.__logger.error("Failed to parse incoming message as JSON.")
 
-    async def broadcastMessage(self, payload):
-        for connection in list(self.__activeConnections):
-            if connection.closed:
-                self.__logger.warning("Removing closed connection from _activeConnections.")
-                self.__activeConnections.remove(connection)
-                continue
+    def enqueueMessage(self, payload: dict):
+        try:
+            asyncio.run_coroutine_threadsafe(self.broadcastQueue.put(payload), self.__mainLoop)
+            self.__logger.debug(f"Enqueued message: {payload}")
+        except Exception as e:
+            self.__logger.error(f"Failed to enqueue message: {e}")
+
+    async def _processBroadcastQueue(self):
+        self.__logger.info("Starting broadcast queue processor.")
+        while True:
             try:
-                await connection.send_str(json.dumps(payload))
-                self.__logger.info("Message sent to client")                
-            except ConnectionResetError as e:
-                self.__logger.error(f"ConnectionResetError while sending message: {e}")
-                self.__activeConnections.remove(connection)
+                payload = await self.broadcastQueue.get()
+                self.__logger.debug(f"Dequeued message for broadcast: {payload}")
+                if not payload:
+                    await asyncio.sleep(0.1)
+                    continue
+                
+                messageStr = json.dumps(payload)
+                
+                for connection in list(self.__activeConnections):
+                    if connection.closed:
+                        self.__logger.warning("Removing closed connection during broadcast.")
+                        self.__activeConnections.remove(connection)
+                        continue
+                    try:
+                        await connection.send_str(messageStr)
+                        self.__logger.debug(f"Message sent to client {connection}")
+                    except ConnectionResetError:
+                        self.__logger.warning(f"ConnectionResetError for client {connection}. Removing.")
+                        self.__activeConnections.remove(connection)
+                    except Exception as e:
+                        self.__logger.error(f"Unexpected error sending to client {connection}: {e}. Removing.")
+                        self.__activeConnections.remove(connection)
+                
+                self.broadcastQueue.task_done()
+            except asyncio.CancelledError:
+                self.__logger.info("Broadcast queue processor task cancelled.")
+                break
             except Exception as e:
-                self.__logger.error(f"Unexpected error while sending message: {e}")
-                self.__activeConnections.remove(connection)
+                self.__logger.error(f"Error in broadcast queue processor task: {e}", exc_info=True)
+                await asyncio.sleep(1)
