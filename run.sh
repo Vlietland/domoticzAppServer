@@ -4,7 +4,7 @@ set -e
 
 IMAGE_NAME="domoticz-app-server"
 CONTAINER_NAME="domoticzAppServerContainer"
-PORT=5000
+PORT=46505
 
 if [ "$1" == "docker" ]; then
     echo "🚀 Running in Docker mode..."
