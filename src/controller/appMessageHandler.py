@@ -26,4 +26,4 @@ class AppMessageHandler:
             await self.__onGateCloseRequest(payload)            
         elif messageType == "getWeather":
             await self.__onWeatherRequest(payload)
-        else self.logger.info(f"Request unable to process: {mqttPayload}")
+        else: self.__logger.info(f"Request unable to process: {mqttPayload}")
