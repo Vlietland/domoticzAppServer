@@ -55,7 +55,7 @@ class DomoticzAppAPI:
         while True:
             try:
                 payload = await self.broadcastQueue.get()
-                self.__logger.debug(f"Dequeued message for broadcast: {payload}")
+                self.__logger.debug(f"Dequeued message for broadcast")
                 if not payload:
                     await asyncio.sleep(0.1)
                     continue
