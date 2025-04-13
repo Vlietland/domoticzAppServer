@@ -24,7 +24,7 @@ class WeatherHandler:
         if self.temperature == None:
             self.logger.debug("Temperature not yet received")
             return
-        message = {'type': 'weather', 'temp': temperature}
+        message = {'type': 'weather', 'temp': self.temperature}
         try:
             self.__enqueueMessage(message)
             self.__logger.info("Weather information enqueued for transfer to client.")
