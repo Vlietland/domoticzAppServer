@@ -29,10 +29,8 @@ class DomoticzAppServer:
         self.__domoticzAppAPI = DomoticzAppAPI(handleAppMessageCallback=None)
         self.__mqttConnection = MqttConnection(handleMqttMessageCallback=None, messageFilter=messageFilter)
         
-        # Centralized enqueue method from the API
         enqueueMessageCallback = self.__domoticzAppAPI.enqueueMessage
-
-        weatherHandler = WeatherHandler(enqueueMessageCallback) # Pass callback
+        weatherHandler = WeatherHandler(enqueueMessageCallback)
 
         alertQueue = AlertQueue()
         alertHandler = AlertHandler(enqueueMessageCallback, alertQueue.getAlerts, alertQueue.deleteAlerts)
@@ -45,7 +43,8 @@ class DomoticzAppServer:
             weatherHandler.getWeatherDevice, weatherHandler.onWeatherDataReceived)
 
         appMessageHandler = AppMessageHandler(alertHandler.onGetAlertsRequest, alertHandler.onDeleteAlertsRequest,            
-            cameraHandler.onCameraImageRequest, gateStateHandler.onOpenGateRequest, gateStateHandler.onCloseGateRequest)
+            cameraHandler.onCameraImageRequest, gateStateHandler.onOpenGateRequest, gateStateHandler.onCloseGateRequest,
+            weatherHandler.onWeatherRequest)
         self.__domoticzAppAPI.setHandleAppMessageCallback(appMessageHandler.onAppMessageCallback)
         self.__mqttConnection.setHandleMqttMessageCallback(mqttMessageHandler.onMqttMessageCallback)
         
