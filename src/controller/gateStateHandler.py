@@ -16,7 +16,7 @@ class GateStateHandler:
     def getGateDevice(self):
         return self.__gateDevice
 
-    async def onOpenGateRequest(self, payload):
+    async def onOpenGateRequest(self):
         if not self.__gateToggleIdx:
             self.__logger.debug("Gate toggle device index not configured")
             return
@@ -27,7 +27,7 @@ class GateStateHandler:
         self.__publish('domoticz/in', mqttPayload)
         self.__logger.info(f"Gate open command sent: {mqttPayload}")
 
-    async def onCloseGateRequest(self, payload):
+    async def onCloseGateRequest(self):
         if not self.__gateToggleIdx:
             self.__logger.debug("Gate toggle device index not configured")
             return
