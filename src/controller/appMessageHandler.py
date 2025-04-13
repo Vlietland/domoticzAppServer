@@ -14,6 +14,7 @@ class AppMessageHandler:
 
     async def onAppMessageCallback(self, payload):
         messageType = payload.get('type')
+        self.__logger.debug(f"Message received $payload")        
         if messageType == "getAlerts":
             self.__onGetNotificationsRequest()
         elif messageType == "purgeAlerts":
