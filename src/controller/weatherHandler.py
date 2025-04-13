@@ -11,7 +11,7 @@ class WeatherHandler:
     def getWeatherDevice(self):
         return self.weatherDevice
 
-    async def onWeatherDataReceived(self, temp):
+    def onWeatherDataReceived(self, temp):
         if temp is not None:
             self.temperature = temp
             message = {'type': 'weather', 'outsideTemp': temp}
