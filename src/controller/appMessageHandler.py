@@ -21,9 +21,9 @@ class AppMessageHandler:
         elif messageType == "getCameraImage":
             await self.__onCameraImageRequest(payload)
         elif messageType == "openGateCommand":
-            await self.__onGateOpenRequest(payload)
+            await self.__onGateOpenRequest()
         elif messageType == "closeGateCommand":
-            await self.__onGateCloseRequest(payload)            
+            await self.__onGateCloseRequest()            
         elif messageType == "getWeather":
-            await self.__onWeatherRequest(payload)
+            await self.__onWeatherRequest()
         else: self.__logger.info(f"Request unable to process")

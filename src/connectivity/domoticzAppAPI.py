@@ -46,7 +46,7 @@ class DomoticzAppAPI:
     def enqueueMessage(self, payload: dict):
         try:
             asyncio.run_coroutine_threadsafe(self.broadcastQueue.put(payload), self.__mainLoop)
-            self.__logger.debug(f"Enqueued message: {payload}")
+            self.__logger.debug(f"Enqueued message")
         except Exception as e:
             self.__logger.error(f"Failed to enqueue message: {e}")
 
