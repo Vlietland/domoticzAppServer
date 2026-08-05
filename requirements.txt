@@ -1,4 +1,4 @@
-aiohttp==3.11.14                                                                                                
-paho-mqtt==2.1.0                                                                                                
-python-dotenv==1.1.0                                                                                            
-requests==2.32.4   
+aiohttp==3.14.3
+paho-mqtt==2.1.0
+python-dotenv==1.2.2
+requests==2.34.2  
