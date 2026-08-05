@@ -10,7 +10,11 @@ class MqttConnection:
         self.broker = os.getenv('MQTT_HOST')
         self.port = int(os.getenv('MQTT_PORT'))
         self.topic = os.getenv('TOPIC')
+        self.mqttUser = os.getenv('MQTT_USER')
+        self.mqttPassword = os.getenv('MQTT_PASSWORD')
         self.client = mqtt.Client(client_id="DomoticzAppServer", protocol=protocol)
+        if self.mqttUser and self.mqttPassword:
+            self.client.username_pw_set(self.mqttUser, self.mqttPassword)
         self.client.on_connect = self.onConnect
         self.client.on_message = self.onMessage
         self.handleMqttMessageCallback = handleMqttMessageCallback
