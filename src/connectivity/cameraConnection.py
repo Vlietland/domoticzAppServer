@@ -35,3 +35,6 @@ class CameraConnection:
             if response.status_code == 401:
                 self.logger.error(f"Unauthorized (401) - Camera '{cameraId}' URL: {url}")
             raise
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"Could not access camera '{cameraId}' URL: {url}: {e}") 
+            return None
