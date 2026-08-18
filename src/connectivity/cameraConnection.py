@@ -28,7 +28,7 @@ class CameraConnection:
             self.logger.error(f"Camera with ID {cameraId} not found")
             return None
         try:
-            response = await asyncio.to_thread(requests.get, url, auth=(self.username, self.password))
+            response = await asyncio.to_thread(requests.get, url, auth=(self.username, self.password), timeout=5)
             response.raise_for_status()
             return base64.b64encode(response.content).decode('utf-8')
         except requests.exceptions.HTTPError as e:
